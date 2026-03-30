@@ -325,10 +325,18 @@
 
             try {
                 allWeatherData = {};
-                const fetchPromises = cities.map(city =>
-                    fetch(`${API_URL}?latitude=${city.latitude}&longitude=${city.longitude}&current=temperature,weather_code,humidity&timezone=Asia/Tokyo`)
+                const fetchPromises = cities.map(city => {
+                    const url = new URL(API_URL);
+                    url.searchParams.append('latitude', city.latitude);
+                    url.searchParams.append('longitude', city.longitude);
+                    url.searchParams.append('current', 'temperature,weather_code,humidity');
+                    url.searchParams.append('timezone', 'auto');
+
+                    return fetch(url.toString())
                         .then(response => {
-                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
                             return response.json();
                         })
                         .then(data => {
@@ -336,8 +344,8 @@
                         })
                         .catch(error => {
                             allWeatherData[city.name] = { error: error.message };
-                        })
-                );
+                        });
+                });
 
                 await Promise.all(fetchPromises);
 
